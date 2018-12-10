@@ -15,7 +15,6 @@ const getFlexCookie = async (user, pass) => {
       },
     });
     const cookie = await response.headers['set-cookie'];
-    // console.log(cookie);
     return cookie;
   } catch (err) {
     throw (err);
@@ -24,8 +23,7 @@ const getFlexCookie = async (user, pass) => {
 
 const COOKIE = getFlexCookie(process.env.FLEXUSER, process.env.FLEXPASS);
 
-const getReport = async (elementID) => {
-  const reportID = '77fea750-59e5-11e7-a785-0030489e8f64'; // pull sheet
+const getReport = async (reportID, elementID) => {
   const uri = `https://loungeworks.flexrentalsolutions.com/rest/bizops/gen-report/${reportID}?parameterSubmission=true&PROJECT_ELEMENT_ID=${elementID}&REPORT_FORMAT=pdf`;
   try {
     const response = await axios.get(uri, {
@@ -35,18 +33,42 @@ const getReport = async (elementID) => {
         'Content-Type': 'application/pdf',
       },
     });
-    // console.log(response);
     return response.data;
   } catch (err) {
     throw err;
   }
 };
 
-// const testelementID = '0e76a180-d7dd-11e8-8ad6-0030489e8f64';
+const getFlexDetails = async (eventId) => {
+  const URL = `https://loungeworks.flexrentalsolutions.com/rest/elements/get?id=${eventId}`;
+  try {
+    const res = await axios.get(URL, {
+      headers: { cookie: await COOKIE },
+    });
+    return res.data;
+  } catch (err) {
+    throw (err);
+  }
+};
+
+const quoteDefinitionID = '9bfb850c-b117-11df-b8d5-00e08175e43e';
+const pullSheetDefinitionID = 'a220432c-af33-11df-b8d5-00e08175e43e';
+
+const parseQuery = async (query) => {
+  const { elementID, reportID } = query;
+  const { childIds, definitionId } = await getFlexDetails(elementID);
+  if (definitionId === quoteDefinitionID) {
+    const [pullSheet] = childIds
+      .map(async childID => getFlexDetails(childID))
+      .filter(async child => child.definitionId === pullSheetDefinitionID);
+    const { objectIdentifier } = await pullSheet;
+    return { reportID, elementID: objectIdentifier };
+  }
+  return query;
+};
 
 module.exports = async (req, res) => {
   const { query } = parse(req.url, true);
-  const { elementID = '' } = query;
-  res.end(await getReport(elementID));
-  //   res.end(elementID);
+  const { reportID = '', elementID = '' } = parseQuery(query);
+  res.end(await getReport(reportID, elementID));
 };
