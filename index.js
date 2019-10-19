@@ -7,7 +7,8 @@ module.exports = async (req, res) => {
   try {
     const { query } = parse(req.url, true);
     const { reportID = '', elementID = '' } = query;
-    res.end(await getReport(await parseQuery({ reportID, elementID })));
+    const pdf = await getReport(await parseQuery({ reportID, elementID }));
+    res.end(pdf);
   } catch (err) {
     res.end();
     throw err;
