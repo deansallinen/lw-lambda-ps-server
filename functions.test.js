@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 
-const { parseQuery } = require('./functions');
+const { parseQuery } = require('./api/_functions');
 
 test('should return one pull sheet id given a quote id', async () => {
   const query = {

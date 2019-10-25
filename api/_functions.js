@@ -50,7 +50,7 @@ const getFlexDetails = async (eventId) => {
   }
 };
 
-const parseQuery = async ({ reportID, elementID, index=0 }) => {
+const parseQuery = async ({ reportID, elementID, index }) => {
   const quoteDefinitionID = '9bfb850c-b117-11df-b8d5-00e08175e43e';
   const pullSheetDefinitionID = 'a220432c-af33-11df-b8d5-00e08175e43e';
   //   const quoteReportID = '3bb30290-5830-11e5-8638-003048de147e';
@@ -59,12 +59,13 @@ const parseQuery = async ({ reportID, elementID, index=0 }) => {
     const details = await getFlexDetails(elementID);
     const { definitionId, childIds } = details;
     const pullSheetPromise = Promise.all(
-      childIds
-        .map(async childID => getFlexDetails(childID))
-        .filter(async child => child.definitionId === pullSheetDefinitionID),
+      childIds.map(async childID => getFlexDetails(childID))
     );
-    const pullSheetsArray = await pullSheetPromise;
+    const documentsArray = await pullSheetPromise;
+    const pullSheetsArray = documentsArray.filter(document => document.definitionId === pullSheetDefinitionID);
+
     if (definitionId === quoteDefinitionID && pullSheetsArray.length) {
+      // console.log(pullSheetsArray.length)
       return { reportID: pullSheetReportID, elementID: pullSheetsArray[index].objectIdentifier };
     }
     return { reportID, elementID };
